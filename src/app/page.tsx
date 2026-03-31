@@ -15,6 +15,20 @@ export default function Home() {
   
   const [appState, setAppState] = useState<'disconnected' | 'ready' | 'recording' | 'summary'>('disconnected');
   const [showAbout, setShowAbout] = useState(false);
+  const [workoutTime, setWorkoutTime] = useState(0);
+
+  // Native NextJS Stopwatch for accurate time tracking independent of Echelon
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (appState === 'recording') {
+      interval = setInterval(() => {
+        setWorkoutTime(t => t + 1);
+      }, 1000);
+    } else if (appState === 'ready' || appState === 'disconnected') {
+      setWorkoutTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [appState]);
 
   // Sync state when bluetooth connection resolves/drops
   useEffect(() => {
@@ -31,7 +45,7 @@ export default function Home() {
     // Eventually replace mock payload with real calculated session timeseries array from tracking state
     const generateMockSession = () => {
       const data = [];
-      const totalTime = Math.floor(Math.random() * 600) + 300; 
+      const totalTime = workoutTime > 0 ? workoutTime : Math.floor(Math.random() * 600) + 300; 
       for (let t = 0; t <= totalTime; t += 10) { 
         data.push({
           time: t,
@@ -56,13 +70,13 @@ export default function Home() {
     saveRow({
       spmAvg: metrics.spm > 0 ? metrics.spm : mock.spmAvg,
       distance: metrics.distance > 0 ? metrics.distance : mock.distance,
-      time: metrics.time > 0 ? metrics.time : mock.time,
+      time: workoutTime > 0 ? workoutTime : mock.time,
       wattsAvg: metrics.watts > 0 ? metrics.watts : mock.wattsAvg,
       sessionData: mock.sessionData
     });
 
     setAppState('summary'); // Transition to summary state instead of ready
-  }, [metrics, saveRow, appState]);
+  }, [metrics, saveRow, appState, workoutTime]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -223,7 +237,7 @@ export default function Home() {
           <div className="w-full flex flex-col gap-0 z-10 w-full relative">
             {/* Main Metrics Area */}
             <section className="w-full min-h-[calc(100dvh-95px)] flex flex-col shrink-0">
-              <DashboardMetrics metrics={metrics} />
+              <DashboardMetrics metrics={{ ...metrics, time: workoutTime }} />
             </section>
 
             {/* In summary mode, show the session analytics directly below */}
