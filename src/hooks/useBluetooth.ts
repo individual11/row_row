@@ -15,7 +15,7 @@ export function useBluetooth() {
     distance: 0,
     time: 0,
     watts: 0,
-    resistance: 0,
+    resistance: 1,
   });
   const [logs, setLogs] = useState<string[]>([]);
   const deviceRef = useRef<any>(null);
@@ -115,14 +115,30 @@ export function useBluetooth() {
                             if (cmd === 211) { 
                               const spmValue = body[0];
                               setMetrics(prev => ({ ...prev, spm: spmValue }));
+                            } else if (cmd === 210) { 
+                              // 0xD2 - Handlebar Button (Resistance)
+                              const targetLevel = body[0];
+                              if (writeCharRef.current) {
+                                const sum = 240 + 196 + 1 + targetLevel;
+                                const writeCmd = new Uint8Array([240, 196, 1, targetLevel, sum % 256]);
+                                try {
+                                  if (writeCharRef.current.properties.writeWithoutResponse) {
+                                    writeCharRef.current.writeValueWithoutResponse(writeCmd);
+                                  } else {
+                                    writeCharRef.current.writeValue(writeCmd);
+                                  }
+                                } catch (e) {} // Silent fail on motor error
+                              }
+                              setMetrics(prev => ({ ...prev, resistance: targetLevel }));
                             } else if (cmd === 209) { 
-                              addLog(`[Payload] ${body.join(", ")}`);
+                              // 0xD1 - 17 Byte Payload (Distance & Watts)
+                              const currentWatts = (body[10] << 8) | body[11]; // Watts at Indexes 10 and 11
+                              const currentDistance = (body[13] << 8) | body[14]; // Distance at Indexes 13 and 14
                               setMetrics(prev => ({ 
                                 ...prev, 
-                                time: body[2] || prev.time 
+                                distance: currentDistance,
+                                watts: currentWatts
                               }));
-                            } else {
-                              addLog(`[Cmd ${cmd}] Body: ${body.join(", ")}`);
                             }
                           } else {
                             addLog(`[Error] Bad Checksum! Expected ${checksum}, got ${actualChecksum}`);
