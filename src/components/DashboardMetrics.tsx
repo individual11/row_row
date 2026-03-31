@@ -1,6 +1,14 @@
 import { RowMetrics } from "@/hooks/useBluetooth";
 
 export default function DashboardMetrics({ metrics }: { metrics: RowMetrics }) {
+  const formatTime = (seconds: number) => {
+    if (!seconds) return "0";
+    if (seconds < 60) return seconds.toString();
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="w-full flex-1 flex flex-col border-y-4 border-charcoal bg-charcoal/5">
       {/* Primary Metrics */}
@@ -13,18 +21,19 @@ export default function DashboardMetrics({ metrics }: { metrics: RowMetrics }) {
         </div>
         <div className="w-full h-full flex flex-col items-center justify-center p-4">
           <span className="text-xl md:text-3xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-2 mt-4 font-bold">Distance</span>
-          <span className="font-sans font-black text-[min(24vw,30vh)] leading-none text-charcoal tracking-tighter">
+          <div className="font-sans font-black text-[min(24vw,30vh)] leading-none text-charcoal tracking-tighter flex items-baseline">
             {metrics.distance || "0"}
-          </span>
+            <span className="text-[min(8vw,10vh)] ml-4 text-charcoal/40 font-bold tracking-tighter lowercase">m</span>
+          </div>
         </div>
       </div>
 
       {/* Secondary Metrics */}
       <div className="grid grid-cols-3 border-t-4 border-charcoal divide-x-4 divide-charcoal bg-offWhite">
         <div className="w-full flex flex-col items-center justify-center p-4 lg:p-8">
-          <span className="text-lg md:text-xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-1 font-bold">Time (s)</span>
+          <span className="text-lg md:text-xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-1 font-bold">Time</span>
           <span className="font-sans font-black text-[min(10vw,12vh)] leading-none text-charcoal/90 tracking-tighter">
-            {metrics.time || "0"}
+            {formatTime(metrics.time)}
           </span>
         </div>
         <div className="w-full flex flex-col items-center justify-center p-4 lg:p-8">
