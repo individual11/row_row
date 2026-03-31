@@ -10,10 +10,10 @@ import ShareButton from "@/components/ShareButton";
 import { MdInfoOutline } from 'react-icons/md';
 
 export default function Home() {
-  const { isConnected, connect, disconnect, metrics, logs } = useBluetooth();
+  const { isConnected, connect, reconnect, permittedDevices, disconnect, metrics, logs } = useBluetooth();
   const { history, saveRow, clearHistory } = useRowHistory();
   
-  const [appState, setAppState] = useState<'disconnected' | 'ready' | 'recording'>('disconnected');
+  const [appState, setAppState] = useState<'disconnected' | 'ready' | 'recording' | 'summary'>('disconnected');
   const [showAbout, setShowAbout] = useState(false);
 
   // Sync state when bluetooth connection resolves/drops
@@ -28,10 +28,10 @@ export default function Home() {
   const handleFinishRow = useCallback(() => {
     if (appState !== 'recording') return;
 
-    // Generate mock session data for visualizing the new chart since we don't have real BT data yet
+    // Eventually replace mock payload with real calculated session timeseries array from tracking state
     const generateMockSession = () => {
       const data = [];
-      const totalTime = Math.floor(Math.random() * 600) + 300; // 5 to 15 mins
+      const totalTime = Math.floor(Math.random() * 600) + 300; 
       for (let t = 0; t <= totalTime; t += 10) { 
         data.push({
           time: t,
@@ -61,7 +61,7 @@ export default function Home() {
       sessionData: mock.sessionData
     });
 
-    setAppState('ready');
+    setAppState('summary'); // Transition to summary state instead of ready
   }, [metrics, saveRow, appState]);
 
   useEffect(() => {
@@ -77,12 +77,36 @@ export default function Home() {
 
   const latestRecord = history.length > 0 ? history[history.length - 1] : null;
 
+  // Render the history section cleanly wherever needed
+  const renderHistory = () => {
+    if (history.length === 0) return null;
+    return (
+      <section className="w-full mt-16 border-t-8 border-charcoal bg-charcoal/5 px-8 py-16 text-left absolute left-0 right-0">
+        <div className="max-w-6xl mx-auto flex items-center justify-between mb-6">
+          <h2 className="font-sans font-black text-4xl uppercase tracking-tighter">Row History</h2>
+          {latestRecord && <ShareButton record={latestRecord} />}
+        </div>
+        <div className="max-w-6xl mx-auto">
+          <HistoryChart history={history} />
+          <div className="mt-4 flex justify-end">
+            <button 
+              onClick={clearHistory}
+              className="text-sm font-bold text-red-500 hover:text-red-700 uppercase tracking-wider"
+            >
+              Clear History
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <main className="min-h-screen bg-offWhite text-charcoal flex flex-col items-center font-sans tracking-tight relative">
       
       {/* About Modal */}
       {showAbout && (
-        <div className="fixed inset-0 bg-charcoal/90 backdrop-blur-md z-50 flex items-center justify-center p-8">
+        <div className="fixed inset-0 bg-charcoal/90 backdrop-blur-md z-[100] flex items-center justify-center p-8">
           <div className="bg-offWhite max-w-2xl w-full p-12 rounded-3xl relative shadow-2xl">
             <button onClick={() => setShowAbout(false)} className="absolute top-6 right-8 font-black text-3xl hover:opacity-50 transition-opacity">×</button>
             <h2 className="font-sans font-black text-4xl mb-6 tracking-tighter uppercase">About Rower</h2>
@@ -98,14 +122,38 @@ export default function Home() {
 
       {/* Disconnected Splash State */}
       {appState === 'disconnected' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-offWhite">
+        <div className="absolute inset-0 flex flex-col items-center justify-start z-20 bg-offWhite overflow-y-auto pt-32 px-8">
           <h1 className="font-sans font-black text-[12vw] leading-none uppercase tracking-tighter mb-12">Rower</h1>
-          <button 
-            onClick={connect}
-            className="px-12 py-6 rounded-full font-black text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl"
-          >
-            Connect to Rower
-          </button>
+          
+          {permittedDevices.length > 0 ? (
+            <div className="flex flex-col gap-4 mb-8">
+              {permittedDevices.map((d, i) => (
+                <button 
+                  key={i}
+                  onClick={() => reconnect(d)}
+                  className="px-12 py-6 rounded-full font-black text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl"
+                >
+                  Reconnect {d.name || "Rower"}
+                </button>
+              ))}
+              <div className="flex flex-col items-center mt-6">
+                <span className="text-xs uppercase tracking-widest opacity-40 font-bold mb-2">- Or -</span>
+                <button 
+                  onClick={connect}
+                  className="px-8 py-3 rounded-full font-bold opacity-70 border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-offWhite transition-colors uppercase tracking-widest"
+                >
+                  Pair New Rower
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button 
+              onClick={connect}
+              className="px-12 py-6 rounded-full font-black text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl mb-12"
+            >
+              Connect to Rower
+            </button>
+          )}
           
           <button 
             onClick={() => setShowAbout(true)} 
@@ -113,6 +161,8 @@ export default function Home() {
           >
             <MdInfoOutline className="w-6 h-6" /> About
           </button>
+
+          {renderHistory()}
         </div>
       )}
 
@@ -128,7 +178,7 @@ export default function Home() {
                 >
                   Start Workout
                 </button>
-                <p className="mt-8 font-bold opacity-50 tracking-widest uppercase">Tap to Begin Tracking</p>
+                <p className="mt-8 font-bold text-xl opacity-50 tracking-widest uppercase">Tap to Begin Tracking</p>
              </div>
           )}
 
@@ -144,15 +194,25 @@ export default function Home() {
           <header className="w-full px-8 py-6 flex items-center justify-between border-b-4 border-charcoal mb-0">
             <h1 className="font-sans font-black text-4xl md:text-5xl uppercase tracking-tighter">Rower</h1>
             <div className="flex gap-4">
-              <button 
-                onClick={handleFinishRow}
-                className="px-6 py-2 rounded-full font-bold transition-colors bg-charcoal text-offWhite hover:bg-charcoal/80"
-              >
-                End Workout
-              </button>
+              {appState === 'recording' && (
+                <button 
+                  onClick={handleFinishRow}
+                  className="px-6 py-2 rounded-full font-bold transition-colors bg-charcoal text-offWhite hover:bg-charcoal/80"
+                >
+                  End Workout
+                </button>
+              )}
+              {appState === 'summary' && (
+                <button 
+                  onClick={() => setAppState('ready')}
+                  className="px-6 py-2 rounded-full font-bold transition-colors bg-charcoal text-offWhite hover:scale-105 shadow-md"
+                >
+                  Start New Row
+                </button>
+              )}
               <button 
                 onClick={disconnect}
-                className="px-6 py-2 rounded-full font-bold bg-charcoal/10 border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-offWhite transition-colors"
+                className="px-6 py-2 rounded-full font-bold bg-charcoal/10 border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-offWhite transition-colors flex items-center justify-center"
                 title="Disconnect Device"
               >
                 Disconnect
@@ -160,45 +220,28 @@ export default function Home() {
             </div>
           </header>
 
-          <div className="w-full flex flex-col gap-0">
-            {/* Main Metrics Area: FULL WIDTH AND VIEW HEIGHT */}
+          <div className="w-full flex flex-col gap-0 z-10 w-full relative">
+            {/* Main Metrics Area */}
             <section className="w-full min-h-[calc(100dvh-95px)] flex flex-col shrink-0">
               <DashboardMetrics metrics={metrics} />
             </section>
 
-            {/* Session Analysis Area */}
-            {latestRecord?.sessionData && (
+            {/* In summary mode, show the session analytics directly below */}
+            {appState === 'summary' && latestRecord?.sessionData && (
               <section className="w-full px-8 py-16 border-t-8 border-charcoal">
                 <SessionChart data={latestRecord.sessionData} />
               </section>
             )}
-
-            {/* History Area */}
-            <section className="w-full px-8 py-16 border-t-8 border-charcoal bg-charcoal/5">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-sans font-black text-4xl uppercase tracking-tighter">Row History</h2>
-                {latestRecord && <ShareButton record={latestRecord} />}
-              </div>
-              <HistoryChart history={history} />
-              {history.length > 0 && (
-                <div className="mt-4 flex justify-end">
-                  <button 
-                    onClick={clearHistory}
-                    className="text-sm font-bold text-red-500 hover:text-red-700 uppercase tracking-wider"
-                  >
-                    Clear History
-                  </button>
-                </div>
-              )}
-            </section>
-
+            
+            {/* If not strictly recording, show history and logs implicitly far below */}
+            {appState !== 'recording' && renderHistory()}
           </div>
         </>
       )}
 
       {/* Discovery / Diagnostic Logs (Always visible if there are logs, even in error states) */}
       {logs.length > 0 && (
-        <section className="w-full max-w-4xl px-8 pb-12 mt-8 z-30 relative">
+        <section className="w-full max-w-4xl px-8 pb-12 mt-8 z-30 relative mx-auto">
           <h2 className="font-sans font-black text-2xl uppercase tracking-tighter mb-4 border-b-2 border-charcoal pb-2">Diagnostic Logs</h2>
           <div className="bg-charcoal text-green-400 font-mono text-xs p-4 rounded-xl overflow-y-auto h-64 shadow-inner">
             {logs.map((log, i) => (
