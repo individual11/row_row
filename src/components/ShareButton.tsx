@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { RowRecord } from '@/hooks/useRowHistory';
+import { MdContentCopy } from 'react-icons/md';
 
 export default function ShareButton({ record }: { record: RowRecord | null }) {
   const [copied, setCopied] = useState(false);
@@ -32,8 +33,8 @@ export default function ShareButton({ record }: { record: RowRecord | null }) {
       onClick={handleShare}
       className="bg-charcoal text-offWhite font-sans font-bold py-3 px-6 rounded-full hover:bg-charcoal/80 transition-colors flex items-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5"
     >
-      <span className="text-xl">📋</span>
-      <span>{copied ? "Copied to Clipboard!" : "Copy to Share"}</span>
+      <MdContentCopy className="w-5 h-5" />
+      <span>{copied ? "Copied!" : "Copy to Share"}</span>
     </button>
   );
 }

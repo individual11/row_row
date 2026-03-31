@@ -22,8 +22,8 @@ export default function HistoryChart({ history }: { history: RowRecord[] }) {
   }));
 
   return (
-    <div className="w-full h-72 bg-offWhite p-4 rounded-xl border-2 border-charcoal/10 shadow-sm relative z-0">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full h-72 min-h-[300px] bg-offWhite p-4 rounded-xl border-2 border-charcoal/10 shadow-sm relative z-0">
+      <ResponsiveContainer width="100%" height="100%" minHeight={300}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#333333" strokeOpacity={0.1} vertical={false} />
           <XAxis 

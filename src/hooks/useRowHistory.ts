@@ -9,6 +9,7 @@ export interface RowRecord {
   distance: number;
   time: number; // in seconds
   wattsAvg: number;
+  sessionData?: any[]; // Time-series data from the workout
 }
 
 export function useRowHistory() {

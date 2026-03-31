@@ -2,40 +2,40 @@ import { RowMetrics } from "@/hooks/useBluetooth";
 
 export default function DashboardMetrics({ metrics }: { metrics: RowMetrics }) {
   return (
-    <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+    <div className="w-full flex-1 flex flex-col border-y-4 border-charcoal bg-charcoal/5">
       {/* Primary Metrics */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-charcoal text-offWhite rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg">
-          <span className="text-sm font-sans uppercase tracking-widest opacity-80 mb-2">SPM</span>
-          <span className="font-impact text-7xl font-bold tracking-tight">
+      <div className="flex-1 grid grid-cols-2 divide-x-4 divide-charcoal">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+          <span className="text-xl md:text-3xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-2 mt-4 font-bold">SPM</span>
+          <span className="font-sans font-black text-[min(24vw,30vh)] leading-none text-charcoal tracking-tighter">
             {metrics.spm || "0"}
           </span>
         </div>
-        <div className="bg-charcoal text-offWhite rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg">
-          <span className="text-sm font-sans uppercase tracking-widest opacity-80 mb-2">Distance (m)</span>
-          <span className="font-impact text-7xl font-bold tracking-tight">
+        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+          <span className="text-xl md:text-3xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-2 mt-4 font-bold">Distance</span>
+          <span className="font-sans font-black text-[min(24vw,30vh)] leading-none text-charcoal tracking-tighter">
             {metrics.distance || "0"}
           </span>
         </div>
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-charcoal/10 border-2 border-charcoal/20 rounded-xl p-4 flex flex-col items-center justify-center">
-          <span className="text-xs font-sans uppercase tracking-widest opacity-60 mb-1">Time (s)</span>
-          <span className="font-impact text-4xl font-bold text-charcoal">
+      <div className="grid grid-cols-3 border-t-4 border-charcoal divide-x-4 divide-charcoal bg-offWhite">
+        <div className="w-full flex flex-col items-center justify-center p-4 lg:p-8">
+          <span className="text-lg md:text-xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-1 font-bold">Time (s)</span>
+          <span className="font-sans font-black text-[min(10vw,12vh)] leading-none text-charcoal/90 tracking-tighter">
             {metrics.time || "0"}
           </span>
         </div>
-        <div className="bg-charcoal/10 border-2 border-charcoal/20 rounded-xl p-4 flex flex-col items-center justify-center">
-          <span className="text-xs font-sans uppercase tracking-widest opacity-60 mb-1">Watts</span>
-          <span className="font-impact text-4xl font-bold text-charcoal">
+        <div className="w-full flex flex-col items-center justify-center p-4 lg:p-8">
+          <span className="text-lg md:text-xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-1 font-bold">Watts</span>
+          <span className="font-sans font-black text-[min(10vw,12vh)] leading-none text-charcoal/90 tracking-tighter">
             {metrics.watts || "0"}
           </span>
         </div>
-        <div className="bg-charcoal/10 border-2 border-charcoal/20 rounded-xl p-4 flex flex-col items-center justify-center">
-          <span className="text-xs font-sans uppercase tracking-widest opacity-60 mb-1">Level</span>
-          <span className="font-impact text-4xl font-bold text-charcoal">
+        <div className="w-full flex flex-col items-center justify-center p-4 lg:p-8">
+          <span className="text-lg md:text-xl font-sans uppercase tracking-[0.2em] text-charcoal/60 mb-1 font-bold">Level</span>
+          <span className="font-sans font-black text-[min(10vw,12vh)] leading-none text-charcoal/90 tracking-tighter">
             {metrics.resistance || "0"}
           </span>
         </div>
