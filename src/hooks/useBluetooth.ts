@@ -37,7 +37,11 @@ export function useBluetooth() {
       const device = await (navigator as any).bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: [
-          '00001826-0000-1000-8000-00805f9b34fb', // FTMS Service
+          '00001826-0000-1000-8000-00805f9b34fb', // Standard FTMS
+          '0000180a-0000-1000-8000-00805f9b34fb', // Device Info Service
+          '0000fe59-0000-1000-8000-00805f9b34fb', // FE59 Service
+          '0bf669f0-45f2-11e7-9598-0800200c9a66', // Echelon Proprietary Base UUID 1
+          '0bf669f1-45f2-11e7-9598-0800200c9a66', // Echelon Proprietary Base UUID 2
         ]
       });
 
