@@ -44,6 +44,13 @@ export function useBluetooth() {
       deviceRef.current = device;
       addLog(`Connecting to GATT Server on ${device.name}...`);
       
+      // Attempt to read the advertised UUIDs (if any) before the security filter crushes the services list
+      if (device.uuids && device.uuids.length > 0) {
+        addLog(`Advertised UUIDs: ${device.uuids.join(', ')}`);
+      } else {
+        addLog(`No advertised UUIDs detected by Chrome.`);
+      }
+      
       const server = await device.gatt.connect();
       setIsConnected(true);
       addLog("Connected to GATT Server!");

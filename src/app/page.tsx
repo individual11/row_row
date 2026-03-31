@@ -192,24 +192,25 @@ export default function Home() {
               )}
             </section>
 
-            {/* Discovery / Diagnostic Logs */}
-            {logs.length > 0 && (
-              <section className="w-full px-8 pb-12 bg-charcoal/5">
-                <h2 className="font-sans font-black text-2xl uppercase tracking-tighter mb-4 border-b-2 border-charcoal pb-2">Diagnostic Logs</h2>
-                <div className="bg-charcoal text-green-400 font-mono text-xs p-4 rounded-xl overflow-y-auto h-64 shadow-inner">
-                  {logs.map((log, i) => (
-                    <div key={i} className="mb-1 leading-relaxed border-b border-green-400/10 pb-1">
-                      <span className="text-gray-500 mr-2">
-                        {new Date().toLocaleTimeString('en-US', { hour12: false })}
-                      </span> 
-                      {log}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
         </>
+      )}
+
+      {/* Discovery / Diagnostic Logs (Always visible if there are logs, even in error states) */}
+      {logs.length > 0 && (
+        <section className="w-full max-w-4xl px-8 pb-12 mt-8 z-30 relative">
+          <h2 className="font-sans font-black text-2xl uppercase tracking-tighter mb-4 border-b-2 border-charcoal pb-2">Diagnostic Logs</h2>
+          <div className="bg-charcoal text-green-400 font-mono text-xs p-4 rounded-xl overflow-y-auto h-64 shadow-inner">
+            {logs.map((log, i) => (
+              <div key={i} className="mb-1 leading-relaxed border-b border-green-400/10 pb-1">
+                <span className="text-gray-500 mr-2">
+                  {new Date().toLocaleTimeString('en-US', { hour12: false })}
+                </span> 
+                {log}
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );
