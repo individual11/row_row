@@ -66,23 +66,73 @@ export function useBluetooth() {
       for (const service of services) {
         addLog(`Service: ${service.uuid}`);
         try {
-          const characteristics = await service.getCharacteristics();
+        const characteristics = await service.getCharacteristics();
           
           for (const characteristic of characteristics) {
             addLog(`  Char: ${characteristic.uuid}`);
             if (characteristic.properties.notify || characteristic.properties.indicate) {
               try {
                 await characteristic.startNotifications();
+                
+                // Keep buffer across chunks
+                let packetBuffer: number[] = [];
+
                 characteristic.addEventListener('characteristicvaluechanged', (event: any) => {
-                  const value = event.target.value;
-                  // Log raw bytes so we can reverse engineer the metrics
-                  const bytes = new Uint8Array(value.buffer);
-                  addLog(`[${characteristic.uuid}] Data: ${bytes.join(",")}`);
+                  const bytes = Array.from(new Uint8Array(event.target.value.buffer));
                   
-                  // TODO: Reverse engineer the byte stream to extract:
-                  // SPM, Distance, Time, Watts, Resistance
+                  for (let i = 0; i < bytes.length; i++) {
+                    const b = bytes[i] as number;
+                    
+                    if (packetBuffer.length === 0) {
+                      if (b === 240) packetBuffer.push(b);
+                    } else {
+                      packetBuffer.push(b);
+                      
+                      if (packetBuffer.length >= 3) {
+                        const expectedLength = packetBuffer[2] + 4; // Header(1) + Cmd(1) + Len(1) + Body(Len) + Checksum(1)
+                        if (packetBuffer.length === expectedLength) {
+                          // Verify Checksum
+                          let sum = 0;
+                          for (let j = 0; j < packetBuffer.length - 1; j++) {
+                            sum += packetBuffer[j];
+                          }
+                          const checksum = sum % 256;
+                          const actualChecksum = packetBuffer[packetBuffer.length - 1];
+
+                          if (checksum === actualChecksum) {
+                            const cmd = packetBuffer[1];
+                            const body = packetBuffer.slice(3, packetBuffer.length - 1);
+                            
+                            // Guessing mappings based on observed values
+                            if (cmd === 211) { // 0xD3 - Likely SPM! Value jumped 30, 39, 43
+                              const spmValue = body[0];
+                              setMetrics(prev => ({ ...prev, spm: spmValue }));
+                              addLog(`[Decoded] SPM Updated: ${spmValue}`);
+                            } else if (cmd === 209) { // 0xD1 - 17 Byte core metric payload!
+                              addLog(`[Payload] ${body.join(", ")}`);
+                              
+                              // TODO: Figure out which indexes equal Distance, Watts, Time, Level
+                              // Just picking arbitrary ones to see if the UI updates for the user to test
+                              // Assuming index 2 is Time or Strokes based on incrementing 1, 2...
+                              setMetrics(prev => ({ 
+                                ...prev, 
+                                time: body[2] || prev.time 
+                              }));
+                            } else {
+                              addLog(`[Cmd ${cmd}] Body: ${body.join(", ")}`);
+                            }
+                          } else {
+                            addLog(`[Error] Bad Checksum! Expected ${checksum}, got ${actualChecksum}`);
+                          }
+                          
+                          // Reset buffer for the next valid 240 start byte
+                          packetBuffer = [];
+                        }
+                      }
+                    }
+                  }
                 });
-                addLog(`    -> Subscribed to ${characteristic.uuid}`);
+                addLog(`    -> Subscribed! Listening for streams.`);
               } catch (err: any) {
                 addLog(`    -> Failed to subscribe: ${err.message}`);
               }
