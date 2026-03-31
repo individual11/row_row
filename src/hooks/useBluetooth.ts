@@ -19,6 +19,7 @@ export function useBluetooth() {
   });
   const [logs, setLogs] = useState<string[]>([]);
   const deviceRef = useRef<any>(null);
+  const writeCharRef = useRef<any>(null);
   const [permittedDevices, setPermittedDevices] = useState<any[]>([]);
 
   useEffect(() => {
@@ -60,6 +61,26 @@ export function useBluetooth() {
           
           for (const characteristic of characteristics) {
             addLog(`  Char: ${characteristic.uuid}`);
+
+            // Echelon Write Characteristic
+            if (characteristic.uuid === '0bf669f2-45f2-11e7-9598-0800200c9a66' || characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+              writeCharRef.current = characteristic;
+              addLog(`[System] Discovered Write Characteristic`);
+              // Blast the magic Echelon Initialization Handshake 1 second after connection
+              setTimeout(async () => {
+                 try {
+                   const initCmd = new Uint8Array([240, 176, 1, 1, 162]); // 0xF0, 0xB0, 0x01, 0x01, 0xA2
+                   if (characteristic.properties.writeWithoutResponse) {
+                     await characteristic.writeValueWithoutResponse(initCmd);
+                   } else {
+                     await characteristic.writeValue(initCmd);
+                   }
+                   addLog(`[System] Boom! Sent 0xB0 Initialization Handshake!`);
+                 } catch(e: any) {
+                   addLog(`[System] Init Handshake Failed: ${e.message}`);
+                 }
+              }, 1000); 
+            }
             if (characteristic.properties.notify || characteristic.properties.indicate) {
               try {
                 await characteristic.startNotifications();
