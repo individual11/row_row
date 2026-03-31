@@ -7,7 +7,7 @@ import DashboardMetrics from "@/components/DashboardMetrics";
 import HistoryChart from "@/components/HistoryChart";
 import SessionChart from "@/components/SessionChart";
 import ShareButton from "@/components/ShareButton";
-import { MdInfoOutline } from 'react-icons/md';
+import { MdInfoOutline, MdContentCopy } from 'react-icons/md';
 
 export default function Home() {
   const { isConnected, connect, reconnect, permittedDevices, disconnect, metrics, logs } = useBluetooth();
@@ -242,7 +242,18 @@ export default function Home() {
       {/* Discovery / Diagnostic Logs (Always visible if there are logs, even in error states) */}
       {logs.length > 0 && (
         <section className="w-full max-w-4xl px-8 pb-12 mt-8 z-30 relative mx-auto">
-          <h2 className="font-sans font-black text-2xl uppercase tracking-tighter mb-4 border-b-2 border-charcoal pb-2">Diagnostic Logs</h2>
+          <div className="flex justify-between items-center mb-4 border-b-2 border-charcoal pb-2">
+            <h2 className="font-sans font-black text-2xl uppercase tracking-tighter">Diagnostic Logs</h2>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(logs.join('\n'));
+                alert('Logs copied to clipboard!');
+              }}
+              className="text-xs font-bold px-4 py-2 bg-charcoal text-offWhite rounded-full hover:bg-charcoal/80 transition-colors shadow-md flex items-center gap-2"
+            >
+              <MdContentCopy className="w-4 h-4" /> Copy Logs
+            </button>
+          </div>
           <div className="bg-charcoal text-green-400 font-mono text-xs p-4 rounded-xl overflow-y-auto h-64 shadow-inner">
             {logs.map((log, i) => (
               <div key={i} className="mb-1 leading-relaxed border-b border-green-400/10 pb-1">
