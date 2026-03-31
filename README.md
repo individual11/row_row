@@ -33,13 +33,19 @@ Because the Web Bluetooth API requires a secure context, you **must** serve this
 ```bash
 # Install dependencies
 npm install
-# or
-yarn install
 
 # Start the dev server
 npm run dev
-# or 
-yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result. Click **Connect Rower**, select your machine, and start pulling!
+
+## 🌍 Deploying to GitHub Pages
+This project is configured out-of-the-box for zero-cost static hosting on GitHub Pages, as it contains absolutely no server-side or database requirements.
+
+1. Commit and push your code to your GitHub repository.
+2. In your repository settings on GitHub, navigate to the **Pages** tab.
+3. Under **Build and deployment**, change the Source to **GitHub Actions**.
+4. The included pipeline (`.github/workflows/deploy.yml`) will automatically trigger on code pushes targeting the `main` branch, bypassing manual `npm run build` completely and deploying your app exactly as it looks locally. 
+
+> **Important Routing Note:** If you are deploying this to a repository namespace (e.g., `https://username.github.io/row_row/`), you must uncomment the `basePath: "/row_row"` config line in `next.config.ts` so your application assets route perfectly on the public web!
