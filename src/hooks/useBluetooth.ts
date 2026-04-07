@@ -20,6 +20,8 @@ export function useBluetooth() {
   const [logs, setLogs] = useState<string[]>([]);
   const deviceRef = useRef<any>(null);
   const writeCharRef = useRef<any>(null);
+  const strokeStateRef = useRef<number>(0);
+  const strokeTimesRef = useRef<number[]>([]);
   const [permittedDevices, setPermittedDevices] = useState<any[]>([]);
 
   useEffect(() => {
@@ -113,8 +115,9 @@ export function useBluetooth() {
                             const body = packetBuffer.slice(3, packetBuffer.length - 1);
                             
                             if (cmd === 211) { 
-                              const spmValue = body[0];
-                              setMetrics(prev => ({ ...prev, spm: spmValue }));
+                              // 0xD3 - Flywheel RPM (Bike Cadence)
+                              // Echelon Rowers incorrectly broadcast Flywheel RPM here instead of real SPM!
+                              // We gracefully ignore this 70-100 RPM metric to avoid confusing the user.
                             } else if (cmd === 210) { 
                               // 0xD2 - Handlebar Button (Resistance)
                               const targetLevel = body[0];
@@ -127,13 +130,41 @@ export function useBluetooth() {
                                   } else {
                                     writeCharRef.current.writeValue(writeCmd);
                                   }
-                                } catch (e) {} // Silent fail on motor error
+                                } catch (e) {} 
                               }
                               setMetrics(prev => ({ ...prev, resistance: targetLevel }));
                             } else if (cmd === 209) { 
-                              // 0xD1 - 17 Byte Payload (Distance & Watts)
-                              const currentWatts = (body[10] << 8) | body[11]; // Watts at Indexes 10 and 11
-                              const currentDistance = (body[13] << 8) | body[14]; // Distance at Indexes 13 and 14
+                              // 0xD1 - 17 Byte Payload (Distance, Watts, Stroke State)
+                              const currentWatts = (body[10] << 8) | body[11];
+                              const currentDistance = (body[13] << 8) | body[14];
+                              
+                              // Custom SPM Calculator logic based on Stroke State transitions!
+                              // body[2]: 1 = Drive/Pull, 2 = Recovery, 0 = Idle
+                              const state = body[2];
+                              if (state === 1 && strokeStateRef.current !== 1) {
+                                // New Stroke Initiated!
+                                const now = Date.now();
+                                strokeTimesRef.current.push(now);
+                                if (strokeTimesRef.current.length > 5) strokeTimesRef.current.shift();
+                                
+                                if (strokeTimesRef.current.length >= 2) {
+                                  const duration = strokeTimesRef.current[strokeTimesRef.current.length - 1] - strokeTimesRef.current[0];
+                                  const count = strokeTimesRef.current.length - 1;
+                                  const avgMs = duration / count;
+                                  const calculatedSpm = Math.round(60000 / avgMs);
+                                  setMetrics(prev => ({ ...prev, spm: calculatedSpm }));
+                                }
+                              }
+                              strokeStateRef.current = state;
+
+                              // Decay SPM to zero automatically if no strokes for 4.5 seconds
+                              if (strokeTimesRef.current.length > 0) {
+                                if (Date.now() - strokeTimesRef.current[strokeTimesRef.current.length - 1] > 4500) {
+                                  setMetrics(prev => prev.spm !== 0 ? { ...prev, spm: 0 } : prev);
+                                  strokeTimesRef.current = [];
+                                }
+                              }
+
                               setMetrics(prev => ({ 
                                 ...prev, 
                                 distance: currentDistance,

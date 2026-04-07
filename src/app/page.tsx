@@ -94,15 +94,19 @@ export default function Home() {
   // Render the history section cleanly wherever needed
   const renderHistory = () => {
     if (history.length === 0) return null;
+    
+    // Don't render history graph if we are looking at the summary of our VERY FIRST row, as a 1-dot graph is redundant
+    if (appState === 'summary' && history.length === 1) return null;
+
     return (
-      <section className="w-full mt-16 border-t-8 border-charcoal bg-charcoal/5 px-8 py-16 text-left absolute left-0 right-0">
-        <div className="max-w-6xl mx-auto flex items-center justify-between mb-6">
-          <h2 className="font-sans font-black text-4xl uppercase tracking-tighter">Row History</h2>
+      <section className="w-full mt-auto border-t-8 border-charcoal bg-charcoal/5 px-8 py-16 text-left shrink-0">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+          <h2 className="font-sans font-black text-4xl uppercase tracking-tighter">Previous Workouts</h2>
           {latestRecord && <ShareButton record={latestRecord} />}
         </div>
         <div className="max-w-6xl mx-auto">
           <HistoryChart history={history} />
-          <div className="mt-4 flex justify-end">
+          <div className="mt-8 flex justify-end">
             <button 
               onClick={clearHistory}
               className="text-sm font-bold text-red-500 hover:text-red-700 uppercase tracking-wider"
@@ -136,46 +140,50 @@ export default function Home() {
 
       {/* Disconnected Splash State */}
       {appState === 'disconnected' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-start z-20 bg-offWhite overflow-y-auto pt-32 px-8">
-          <h1 className="font-sans font-black text-[12vw] leading-none uppercase tracking-tighter mb-12">Rower</h1>
+        <div className="absolute inset-0 flex flex-col items-center justify-start z-20 bg-offWhite overflow-y-auto">
           
-          {permittedDevices.length > 0 ? (
-            <div className="flex flex-col gap-4 mb-8">
-              {permittedDevices.map((d, i) => (
-                <button 
-                  key={i}
-                  onClick={() => reconnect(d)}
-                  className="px-12 py-6 rounded-full font-black text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl"
-                >
-                  Reconnect {d.name || "Rower"}
-                </button>
-              ))}
-              <div className="flex flex-col items-center mt-6">
-                <span className="text-xs uppercase tracking-widest opacity-40 font-bold mb-2">- Or -</span>
-                <button 
-                  onClick={connect}
-                  className="px-8 py-3 rounded-full font-bold opacity-70 border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-offWhite transition-colors uppercase tracking-widest"
-                >
-                  Pair New Rower
-                </button>
+          <div className="flex flex-col items-center w-full min-h-[80vh] pt-32 pb-16 px-8">
+            <h1 className="font-sans font-black text-[12vw] leading-none uppercase tracking-tighter mb-12">Rower</h1>
+            
+            {permittedDevices.length > 0 ? (
+              <div className="flex flex-col gap-4 mb-12 w-full max-w-md">
+                {permittedDevices.map((d, i) => (
+                  <button 
+                    key={i}
+                    onClick={() => reconnect(d)}
+                    className="w-full px-12 py-6 rounded-full font-black text-xl md:text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl"
+                  >
+                    Reconnect {d.name || "Rower"}
+                  </button>
+                ))}
+                <div className="flex flex-col items-center mt-6">
+                  <span className="text-xs uppercase tracking-widest opacity-40 font-bold mb-4">- Or -</span>
+                  <button 
+                    onClick={connect}
+                    className="px-8 py-3 rounded-full font-bold opacity-70 border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-offWhite transition-colors uppercase tracking-widest"
+                  >
+                    Pair New Rower
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
+            ) : (
+              <button 
+                onClick={connect}
+                className="px-12 py-6 rounded-full font-black text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl mb-12"
+              >
+                Connect to Rower
+              </button>
+            )}
+            
             <button 
-              onClick={connect}
-              className="px-12 py-6 rounded-full font-black text-2xl uppercase tracking-widest bg-charcoal text-offWhite hover:bg-charcoal/80 transition-all hover:scale-105 shadow-xl mb-12"
+              onClick={() => setShowAbout(true)} 
+              className="mt-8 flex items-center gap-2 font-bold opacity-50 hover:opacity-100 transition-opacity uppercase tracking-widest"
             >
-              Connect to Rower
+              <MdInfoOutline className="w-6 h-6" /> About
             </button>
-          )}
-          
-          <button 
-            onClick={() => setShowAbout(true)} 
-            className="mt-16 flex items-center gap-2 font-bold opacity-50 hover:opacity-100 transition-opacity uppercase tracking-widest"
-          >
-            <MdInfoOutline className="w-6 h-6" /> About
-          </button>
+          </div>
 
+          {/* Render history fully below the fold organically */}
           {renderHistory()}
         </div>
       )}
